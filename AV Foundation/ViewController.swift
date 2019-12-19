@@ -6,10 +6,11 @@
 //  Copyright © 2017 Pranjal Satija. All rights reserved.
 //
 
-import Photos
 import UIKit
+import Photos
 
 class ViewController: UIViewController {
+    
     let cameraController = CameraController()
     
     @IBOutlet fileprivate var captureButton: UIButton!
@@ -30,15 +31,6 @@ class ViewController: UIViewController {
 
 extension ViewController {
     override func viewDidLoad() {
-        func configureCameraController() {
-            cameraController.prepare {(error) in
-                if let error = error {
-                    print(error)
-                }
-                
-                try? self.cameraController.displayPreview(on: self.capturePreviewView)
-            }
-        }
         
         func styleCaptureButton() {
             captureButton.layer.borderColor = UIColor.black.cgColor
@@ -48,51 +40,60 @@ extension ViewController {
         }
         
         styleCaptureButton()
-        configureCameraController()
-    }
-}
-
-extension ViewController {
-    @IBAction func captureImage(_ sender: UIButton) {
-        cameraController.captureImage {(image, error) in
-            guard let image = image else { print(error as Any); return }
-
-            try? PHPhotoLibrary.shared().performChangesAndWait {
-                PHAssetChangeRequest.creationRequestForAsset(from: image)
+        
+        func configureCameraController() {
+            cameraController.prepare {(error) in
+                if let error = error {
+                    print(error)
+                }
+         
+                try? self.cameraController.displayPreview(on: self.capturePreviewView)
             }
         }
+         
+        configureCameraController()
+
     }
-    
     @IBAction func toggleFlash(_ sender: UIButton) {
         if cameraController.flashMode == .on {
             cameraController.flashMode = .off
             toggleFlashButton.setImage(#imageLiteral(resourceName: "Flash Off Icon"), for: .normal)
         }
-        
+     
         else {
             cameraController.flashMode = .on
             toggleFlashButton.setImage(#imageLiteral(resourceName: "Flash On Icon"), for: .normal)
         }
     }
-    
+
     @IBAction func switchCameras(_ sender: UIButton) {
         do {
             try cameraController.switchCameras()
         }
-        
         catch {
             print(error)
         }
-        
         switch cameraController.currentCameraPosition {
         case .some(.front):
             toggleCameraButton.setImage(#imageLiteral(resourceName: "Front Camera Icon"), for: .normal)
-            
         case .some(.rear):
             toggleCameraButton.setImage(#imageLiteral(resourceName: "Rear Camera Icon"), for: .normal)
-            
         case .none:
             return
         }
     }
+    
+    @IBAction func captureImage(_ sender: UIButton) {
+        cameraController.captureImage {(image, error) in
+            guard let image = image else {
+                print(error ?? "Image capture error")
+                return
+            }
+            
+            try? PHPhotoLibrary.shared().performChangesAndWait {
+                PHAssetChangeRequest.creationRequestForAsset(from: image)
+            }
+        }
+    }
 }
+
